@@ -14,6 +14,8 @@ import XMonad.Actions.Warp (warpToScreen, warpToWindow)
 import System.Process
 import Text.Read (readMaybe)
 import Data.Maybe (fromMaybe)
+import XMonad.Layout.Tabbed
+import XMonad.Layout.LayoutBuilder
 
 myNormalBorderColor = "#000000"
 myFocusedBorderColor = "#ff0000"
@@ -25,12 +27,11 @@ modm = mod4Mask
 
 main = do
   maxScreenIndex <- ((-) 1) <$> fromMaybe 1 <$> (readMaybe <$> readCreateProcess (shell "xrandr | grep connected | grep -v disconnected | wc -l") "")
-  putStrLn $ "maxScreenIndex = " ++ (show maxScreenIndex)
   xmprocList <- mapM (spawnPipe . myStatusBar) [0..maxScreenIndex]
   xmonad $ kdeConfig
     { modMask = modm -- use the Windows button as mod
     , manageHook = manageDocks <+> myManageHook
-    , layoutHook = avoidStruts $ smartSpacing 2 $ layoutHook kdeConfig
+    , layoutHook = avoidStruts $ smartSpacing 2 $ myLayout
     , normalBorderColor  = myNormalBorderColor
     , focusedBorderColor = myFocusedBorderColor
     , borderWidth = 3
@@ -43,10 +44,7 @@ myKeys = [
     ((modm, xK_g                    ), gotoMenu)
   , ((modm .|. shiftMask, xK_BackSpace), removeWorkspace)
   , ((modm .|. shiftMask, xK_t      ), renameWorkspace def)
-  -- , ((modm .|. shiftMask, xK_a      ), addWorkspacePrompt def)
   , ((modm .|. shiftMask, xK_s      ), selectWorkspace def)
-  --, ((modm, xK_m                    ), withWorkspace def (windows . W.shift))
-  --, ((modm .|. shiftMask, xK_m      ), withWorkspace def (windows . copy))
   , ((modm .|. shiftMask, xK_m      ), withWorkspace def (windows . W.shift))
   , ((modm, xK_minus), prevWS  ) -- mod-- %! Switch to the previous workspace
   , ((modm, xK_equal), nextWS  ) -- mod-= %! Switch to the next workspace
@@ -82,3 +80,16 @@ myLogHook xmprocList = dynamicLogWithPP xmobarPP
   { ppOutput = \string -> mapM_ (\handle -> hPutStrLn handle string) xmprocList
   , ppTitle  = xmobarColor "green" "" . shorten 50
 }
+
+myLayout = tiled ||| Mirror tiled ||| Full ||| myTabbed
+  where
+     -- default tiling algorithm partitions the screen into two panes
+     tiled   = Tall nmaster delta ratio
+     -- The default number of windows in the master pane
+     nmaster = 1
+     -- Default proportion of screen occupied by master pane
+     ratio   = 1/2
+     -- Percent of screen to increment by when resizing panes
+     delta   = 3/100
+     -- tabbed layout
+     myTabbed = layoutN 1 (relBox 0 0 0.5 1) (Just $ relBox 0 0 1 1) (Tall 0 0.01 0.5) (layoutAll (relBox 0.5 0 1 1) (tabbed shrinkText def))
