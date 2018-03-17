@@ -11,6 +11,9 @@ import XMonad.Actions.DynamicWorkspaces
 import XMonad.Actions.CopyWindow(copy)
 import XMonad.Actions.CycleWS
 import XMonad.Actions.Warp (warpToScreen, warpToWindow)
+import System.Process
+import Text.Read (readMaybe)
+import Data.Maybe (fromMaybe)
 
 myNormalBorderColor = "#000000"
 myFocusedBorderColor = "#ff0000"
@@ -19,9 +22,11 @@ myStatusBar screenNum = "/home/aden/bin/xmobar -x" ++ (show screenNum) ++ " /hom
 myWorkspaces = ["mail", "browser"]
 
 modm = mod4Mask
- 
+
 main = do
-  xmprocList <- mapM (spawnPipe . myStatusBar) [0,1]
+  maxScreenIndex <- ((-) 1) <$> fromMaybe 1 <$> (readMaybe <$> readCreateProcess (shell "xrandr | grep connected | grep -v disconnected | wc -l") "")
+  putStrLn $ "maxScreenIndex = " ++ (show maxScreenIndex)
+  xmprocList <- mapM (spawnPipe . myStatusBar) [0..maxScreenIndex]
   xmonad $ kdeConfig
     { modMask = modm -- use the Windows button as mod
     , manageHook = manageDocks <+> myManageHook
@@ -77,4 +82,3 @@ myLogHook xmprocList = dynamicLogWithPP xmobarPP
   { ppOutput = \string -> mapM_ (\handle -> hPutStrLn handle string) xmprocList
   , ppTitle  = xmobarColor "green" "" . shorten 50
 }
-
