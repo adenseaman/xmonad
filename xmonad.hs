@@ -14,13 +14,14 @@ import XMonad.Actions.Warp (warpToScreen, warpToWindow)
 
 myNormalBorderColor = "#000000"
 myFocusedBorderColor = "#ff0000"
-myStatusBar = "/home/aden/bin/xmobar -x0 /home/aden/.xmonad/xmobar.hs"
+myStatusBar :: Int -> String
+myStatusBar screenNum = "/home/aden/bin/xmobar -x" ++ (show screenNum) ++ " /home/aden/.xmonad/xmobar.hs"
 myWorkspaces = ["mail", "browser"]
 
 modm = mod4Mask
  
 main = do
-  xmproc <- spawnPipe myStatusBar
+  xmprocList <- mapM (spawnPipe . myStatusBar) [0,1]
   xmonad $ kdeConfig
     { modMask = modm -- use the Windows button as mod
     , manageHook = manageDocks <+> myManageHook
@@ -28,7 +29,7 @@ main = do
     , normalBorderColor  = myNormalBorderColor
     , focusedBorderColor = myFocusedBorderColor
     , borderWidth = 3
-    , logHook = myLogHook xmproc
+    , logHook = myLogHook xmprocList
     , workspaces = myWorkspaces
     } `additionalKeys` myKeys
 
@@ -37,7 +38,7 @@ myKeys = [
     ((modm, xK_g                    ), gotoMenu)
   , ((modm .|. shiftMask, xK_BackSpace), removeWorkspace)
   , ((modm .|. shiftMask, xK_t      ), renameWorkspace def)
-  , ((modm .|. shiftMask, xK_a      ), addWorkspacePrompt def)
+  -- , ((modm .|. shiftMask, xK_a      ), addWorkspacePrompt def)
   , ((modm .|. shiftMask, xK_s      ), selectWorkspace def)
   --, ((modm, xK_m                    ), withWorkspace def (windows . W.shift))
   --, ((modm .|. shiftMask, xK_m      ), withWorkspace def (windows . copy))
@@ -65,17 +66,15 @@ warpToWindow' = warpToWindow (1/2) (1/2)
 screenSwitchAndWarp sc f = do
   maybeWorkspaceId <- screenWorkspace sc
   warpToScreen sc (1/2) (1/2)
-  whenJust maybeWorkspaceId (windows .f)
-
+  whenJust maybeWorkspaceId (\wsid -> (windows . f $ wsid) >> warpToWindow')
 
 myManageHook = composeAll . concat $
     [ [ className   =? c --> doFloat           | c <- myFloats]
     ]
   where myFloats      = ["MPlayer", "Gimp", "Plasma", "plasmashell"]
 
-myLogHook xmproc = dynamicLogWithPP xmobarPP
-  { ppOutput = hPutStrLn xmproc
+myLogHook xmprocList = dynamicLogWithPP xmobarPP
+  { ppOutput = \string -> mapM_ (\handle -> hPutStrLn handle string) xmprocList
   , ppTitle  = xmobarColor "green" "" . shorten 50
 }
-
 
