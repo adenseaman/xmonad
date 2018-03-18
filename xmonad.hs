@@ -16,6 +16,7 @@ import Text.Read (readMaybe)
 import Data.Maybe (fromMaybe)
 import XMonad.Layout.Tabbed
 import XMonad.Layout.LayoutBuilder
+import XMonad.Layout.Renamed
 
 myNormalBorderColor = "#000000"
 myFocusedBorderColor = "#ff0000"
@@ -81,10 +82,11 @@ myLogHook xmprocList = dynamicLogWithPP xmobarPP
   , ppTitle  = xmobarColor "green" "" . shorten 50
 }
 
-myLayout = tiled ||| Mirror tiled ||| Full ||| myTabbed
+myLayout = tiled ||| myTabbed ||| Mirror tiled ||| Full
   where
      -- default tiling algorithm partitions the screen into two panes
-     tiled   = Tall nmaster delta ratio
+     tiled   = renamed [Replace "Tiled"] $ Tall nmaster delta ratio
+     mirrorTiled = renamed [Replace "Mirror Tiled"] $ Mirror tiled
      -- The default number of windows in the master pane
      nmaster = 1
      -- Default proportion of screen occupied by master pane
@@ -92,4 +94,4 @@ myLayout = tiled ||| Mirror tiled ||| Full ||| myTabbed
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
      -- tabbed layout
-     myTabbed = layoutN 1 (relBox 0 0 0.5 1) (Just $ relBox 0 0 1 1) (Tall 0 0.01 0.5) (layoutAll (relBox 0.5 0 1 1) (tabbed shrinkText def))
+     myTabbed = renamed [Replace "NiceTabbed"] $ layoutN 1 (relBox 0 0 0.5 1) (Just $ relBox 0 0 1 1) (Tall 0 0.01 0.5) (layoutAll (relBox 0.5 0 1 1) (tabbed shrinkText def))
