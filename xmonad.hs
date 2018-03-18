@@ -17,6 +17,8 @@ import Data.Maybe (fromMaybe)
 import XMonad.Layout.Tabbed
 import XMonad.Layout.LayoutBuilder
 import XMonad.Layout.Renamed
+import XMonad.Layout.MultiToggle
+import XMonad.Layout.MultiToggle.Instances
 
 myNormalBorderColor = "#000000"
 myFocusedBorderColor = "#ff0000"
@@ -52,6 +54,8 @@ myKeys = [
   , ((modm, xK_j ), windows W.focusDown >> warpToWindow' ) -- %! Move focus to the next window
   , ((modm, xK_k ), windows W.focusUp >> warpToWindow' ) -- %! Move focus to the previous window
   , ((modm, xK_m ), windows W.focusMaster >> warpToWindow' ) -- %! Move focus to the master window
+  , ((modm .|. shiftMask, xK_f ), sendMessage $ Toggle MIRROR) -- toggle mirroring of active layout
+  , ((modm, xK_f ), sendMessage $ Toggle FULL) -- toggle mirroring of active layout
   ]
   ++
   zip (zip (repeat (modm)) [xK_1..xK_9]) (map (withNthWorkspace W.greedyView) [0..])
@@ -82,11 +86,10 @@ myLogHook xmprocList = dynamicLogWithPP xmobarPP
   , ppTitle  = xmobarColor "green" "" . shorten 50
 }
 
-myLayout = tiled ||| myTabbed ||| Mirror tiled ||| Full
+myLayout = mkToggle (FULL ?? EOT) . mkToggle (single MIRROR) $ (tiled ||| myTabbed)
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = renamed [Replace "Tiled"] $ Tall nmaster delta ratio
-     mirrorTiled = renamed [Replace "Mirror Tiled"] $ Mirror tiled
      -- The default number of windows in the master pane
      nmaster = 1
      -- Default proportion of screen occupied by master pane
