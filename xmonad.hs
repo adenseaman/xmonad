@@ -72,11 +72,10 @@ myKeys = \conf -> M.fromList $ [
   , ((modm, xK_bracketleft), sendMessage Shrink) -- Shrink the master area
   , ((modm, xK_backslash ), sendMessage $ Toggle MIRROR) -- toggle mirroring of active layout
   -- Group adjustment
-  -- , ((modm .|. shiftMask, xK_o), withFocused (sendMessage . MergeAll)) -- merge all windows
-  -- , ((modm .|. shiftMask, xK_l), withFocused (sendMessage . MergeAll)) -- merge all windows
+  , ((modm .|. shiftMask .|. controlMask, xK_h), withFocused (sendMessage . MergeAll)) -- merge all windows
+  , ((modm .|. shiftMask .|. controlMask, xK_k), withFocused (sendMessage . UnMerge))
   , ((modm .|. shiftMask .|. controlMask, xK_u), sendMessage $ pullGroup U)
   , ((modm .|. shiftMask .|. controlMask, xK_j), sendMessage $ pullGroup D)
-  , ((modm .|. shiftMask .|. controlMask, xK_k), withFocused (sendMessage . UnMerge))
   -- Workspace modification
   , ((modm .|. shiftMask, xK_BackSpace), removeWorkspace)
   , ((modm, xK_a      ), selectWorkspace def)
