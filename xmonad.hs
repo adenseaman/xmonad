@@ -29,7 +29,7 @@ myWorkspaces = ["mail", "browser"]
 modm = mod4Mask
 
 main = do
-  maxScreenIndex <- ((-) 1) <$> fromMaybe 1 <$> (readMaybe <$> readCreateProcess (shell "xrandr | grep connected | grep -v disconnected | wc -l") "")
+  maxScreenIndex <- (flip (-) 1) <$> fromMaybe 1 <$> (readMaybe <$> readCreateProcess (shell "xrandr | grep connected | grep -v disconnected | wc -l") "")
   xmprocList <- mapM (spawnPipe . myStatusBar) [0..maxScreenIndex]
   xmonad $ kdeConfig
     { modMask = modm -- use the Windows button as mod
